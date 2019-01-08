@@ -1,6 +1,6 @@
 # lab1
 
-# Running
+## Running
 
 ```bash
 # compile source files
