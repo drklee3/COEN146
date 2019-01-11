@@ -12,7 +12,7 @@ It will copy src to dest. It will use functions `fread` and `fwrite` and a char 
 
 ```bash
 # generate random binary 10 byte test file
-head -c 10 < /dev/urandom > rand.bin
+head -c 12345678 < /dev/urandom > rand.bin
 
 # compile source files
 make
