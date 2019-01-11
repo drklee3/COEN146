@@ -1,7 +1,9 @@
 CC=g++
+CFLAGS = -Wall
 
 default:
-	$(CC) main.c -o main.o
+	$(CC) $(CFLAGS) main.c -o main.o
 
 clean:
 	-rm -f *.o
+	-rm -f *.bin

@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // read files
+    // open files
     FILE* source_fp = fopen(argv[1], "rb");
 
     if (!source_fp) {
@@ -35,9 +35,18 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // determine file size
+    // determine file size and allocate memory
     long file_size = getFileSize(source_fp);
-    char* content = (char*)malloc(file_size + 1);
+    // dynamic buffer size
+    // char* content = (char*)malloc(file_size + 1);
+
+    // fixed buffer size
+    char* content[10];
+
+    if (file_size > 10) {
+        printf("File size is greater than 10 bytes, exiting\n");
+        return 1;
+    }
 
     // read content from source file
     fread(content, file_size, 1, source_fp);
