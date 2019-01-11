@@ -1,3 +1,7 @@
+/**
+ * Derrick Lee, F 2:15PM
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -82,17 +86,20 @@ int main(int argc, char* argv[]) {
     char* content[10];
     long bytes_written = 0;
 
+    long bytes;
+    size_t fread_bytes, fwrite_bytes;
+
     // copy bytes by every max 10 bytes
     while (bytes_written < file_size) {
         // get number of bytes to copy, equivalent to max(10, remaining_bytes)
-        long bytes = getBytesToCopy(bytes_written, file_size);
+        bytes = getBytesToCopy(bytes_written, file_size);
 
         // read/write, can also use fread_bytes as the # of bytes to write
         // but this is kinda "safer" maybe
-        size_t fread_bytes  =  fread(content, bytes, 1, source_fp);
-        size_t fwrite_bytes = fwrite(content, bytes, 1, dest_fp);
+        fread_bytes  =  fread(content, bytes, 1, source_fp);
+        fwrite_bytes = fwrite(content, bytes, 1, dest_fp);
 
-        // check if there are errors
+        // check if there are errors reading / writing
         if (hasErr(fread_bytes, fwrite_bytes)) {
             return 1;
         }
