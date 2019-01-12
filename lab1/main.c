@@ -42,18 +42,18 @@ long getBytesToCopy(long written, long size) {
  * @param size_t write number of objects written successfully
  * @return true if there was an error
  */
-bool hasErr(size_t read, size_t write) {
+int hasErr(size_t read, size_t write) {
     if (read != 1) {
         printf("Failed reading\n");
-        return true;
+        return 1;
     }
 
     if (write != 1) {
         printf("Failed writing\n");
-        return true;
+        return 1;
     }
 
-    return false;
+    return 0;
 }
 
 int main(int argc, char* argv[]) {
