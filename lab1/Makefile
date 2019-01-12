@@ -1,5 +1,5 @@
-CC=g++
-CFLAGS = -Wall
+CC=gcc
+CFLAGS = -Wall 
 
 default:
 	$(CC) $(CFLAGS) main.c -o main.o
