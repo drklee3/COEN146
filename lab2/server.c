@@ -1,7 +1,7 @@
- /**************************
- *     socket example, server
- *     Winter 2019
- ***************************/
+/**
+ * Derrick Lee <dlee3@scu.edu>
+ * F2.15
+ */
 
 #include <sys/socket.h>
 #include <netinet/in.h>
