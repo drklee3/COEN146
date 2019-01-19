@@ -22,18 +22,30 @@ int main(int, char *[]);
  *********************/
 int main(int argc, char *argv[]) {
 	int n;
-	// char *p; 
 	int listenfd = 0, connfd = 0;
 	struct sockaddr_in serv_addr; 
 	char buff[10];
 
+	if (argc != 2) {
+		printf("Usage: %s <port>", argv[0]);
+		return 1;
+	}
+
 	// set up
-	memset (&serv_addr, '0', sizeof (serv_addr));
-	memset (buff, '0', sizeof (buff)); 
+	memset (&serv_addr, '0', sizeof(serv_addr));
+	memset (buff, '0', sizeof(buff)); 
 
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = htonl (INADDR_ANY);
-	serv_addr.sin_port = htons (5000); 
+	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+	// parse port string as long
+	long port = strtol(argv[1], NULL, 10);
+	if (port == 0) {
+		printf("Invalid port, exiting\n");
+		return 1;
+	}
+
+	serv_addr.sin_port = htons(port);
 
 	// create socket, bind, and listen
 	listenfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -51,7 +63,13 @@ int main(int argc, char *argv[]) {
 		FILE* fp = fopen(buff, "wb");
 
 		// write response of "1"
-		char resp[] = {'1'};
+		char resp[1] = {'1'};
+
+		if (!fp) {
+			resp[0] = '0';
+		}
+
+		// send '1' if file opened successfully, '0' if not
 		write(connfd, resp, 1);
 
 		size_t written_bytes = 0;

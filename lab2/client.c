@@ -38,11 +38,18 @@ int main (int argc, char *argv[]) {
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		printf("Error : Could not create socket \n");
 		return 1;
-	} 
+	}
+
+	// parse port string as long
+	long port = strtol(argv[1], NULL, 10);
+	if (port == 0) {
+		printf("Invalid port, exiting\n");
+		return 1;
+	}
 
 	// set address
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons(atoi(argv[1]));
+	serv_addr.sin_port = htons(port);
 
 	if (inet_pton(AF_INET, argv[2], &serv_addr.sin_addr) <= 0) {
 		printf("inet_pton error occured\n");
@@ -72,29 +79,29 @@ int main (int argc, char *argv[]) {
 	// send output file name
 	write(sockfd, argv[4], strlen(argv[4]) + 1);
 
-	// receive 1
+	// receive 1 if success
 	read(sockfd, buff, sizeof(buff));
 
 	// check if successful response
-	if (buff[0] != '1') {
-		printf("Invalid response, exiting\n");
-		return 1;
-	}
+	// if (buff[0] != '0') {
+	// 	printf("Invalid response, exiting\n");
+	// 	return 1;
+	// }
 
-	// send file
-	size_t read_bytes = 0;
-	size_t total_bytes = 0;
+	// send file content
+	size_t read_bytes  = 0; // read bytes per 10 byte chunk
+	size_t total_bytes = 0; // total bytes read
 	do {
-		read_bytes = fread(&buff, 1, 10, fp); // read from file
-		write(sockfd, buff, read_bytes); 	 	  // write to socket
+		read_bytes = fread(buff, 1, 10, fp); // read from file
+		write(sockfd, buff, read_bytes); 	 	 // write to socket # of bytes read
 
 		total_bytes += read_bytes;
 	} while (read_bytes);
 
-	printf("Sent file (%zu bytes)\n", total_bytes);
-
 	fclose(fp);
 	close(sockfd);
+
+	printf("Sent file (%zu bytes)\n", total_bytes);
 
 	return 0;
 
