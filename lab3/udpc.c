@@ -3,41 +3,55 @@
  * 2.15F
  */
 
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <netdb.h>
+/*****************************
+ * COEN 146, UDP, client
+ *****************************/
+
 #include <stdio.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <arpa/inet.h> 
 
-int main() {
-   int sock;
-   struct sockaddr_in server_addr;
-   struct hostent *host;
-   char send_data[1024];
-   socklen_t addr_len;
-   host = (struct hostent *) gethostbyname((char *)"127.0.0.1");
+/***********
+ *  main
+ ***********/
+int main (int argc, char *argv[])
+{
+	int sock, portNum, nBytes;
+	char buffer[1024];
+	struct sockaddr_in serverAddr;
+	socklen_t addr_size;
 
-   // open socket
-   if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-      perror("socket");
-      exit(1);
-   }
+	if (argc != 3)
+	{
+		printf ("need the port number and machine\n");
+		return 1;
+	}
 
-   // set address
-   server_addr.sin_family = AF_INET;
-   server_addr.sin_port = htons(5000);
-   server_addr.sin_addr = *((struct in_addr *)host->h_addr);
+	// configure address
+	serverAddr.sin_family = AF_INET;
+	serverAddr.sin_port = htons (atoi (argv[1]));
+	inet_pton (AF_INET, argv[2], &serverAddr.sin_addr.s_addr);
+	memset (serverAddr.sin_zero, '\0', sizeof (serverAddr.sin_zero));  
+	addr_size = sizeof serverAddr;
 
-   while (1) {
-      printf("Client: Type a message (OR q/ Q to quit): \t");
-      scanf("%s", send_data); //input message
+	/*Create UDP socket*/
+    if ((sock = socket (AF_INET, SOCK_DGRAM, 0)) < 0)
+	{
+		printf ("socket error\n");
+		return 1;
+	}
+
+
+	while (1)
+	{
+		printf ("String:");
+		fgets(buffer, 1024, stdin);
+
+		nBytes = strlen (buffer) + 1;
 
       // send packet seq = 0
+
 
       // 0 state wait
       // received packet w/ ack = 1, resend
@@ -52,15 +66,17 @@ int main() {
 
       // 0 state
       // received packet w/ ack = 1
+    
+		// send
+		printf ("Sending: %s", buffer);
+		sendto (sock, buffer, nBytes, 0, (struct sockaddr *)&serverAddr, addr_size);
 
-      if ((strcmp(send_data , "q") == 0) || strcmp(send_data , "Q") == 0) {
-         break;
-      } else {
-         sendto(sock, send_data, strlen(send_data), 0,
-               (struct sockaddr *)&server_addr, sizeof(struct sockaddr)); //send to server
-      }
-   }
+		// receive
+		nBytes = recvfrom (sock, buffer, 1024, 0, NULL, NULL);
+		printf ("Received: %s\n", buffer);
 
-   return 0;
+	}
+
+	return 0;
 }
 
