@@ -1,9 +1,11 @@
 CC=gcc
+DEPS = tfv2.h
 CFLAGS = -Wall
 
-default:
-	$(CC) $(CFLAGS) udpc.c -o udpc.o
-	$(CC) $(CFLAGS) udps.c -o udps.o
+default: udps.o udpc.o
+
+%.o: %.c $(DEPS)
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
 	-rm -f *.o
