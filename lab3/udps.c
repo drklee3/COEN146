@@ -40,7 +40,7 @@ int main (int argc, char *argv[]) {
 
     // bind
     if (bind(sock, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) != 0) {
-        print("bind error\n");
+        printf("bind error\n");
         return 1;
     }
 

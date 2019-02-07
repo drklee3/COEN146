@@ -13,9 +13,9 @@ typedef struct {
 
 int calc_checksum(PACKET *pkt, int nBytes) {
   int i = 0;
-  char cs = 0
+  char cs = 0;
   char *p = (char*) pkt;
-  for (i = 0; i < nBytes, ++i) {
+  for (i = 0; i < nBytes; ++i) {
     cs = cs ^ *p;
     ++p;
   }

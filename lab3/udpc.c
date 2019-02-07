@@ -8,29 +8,31 @@
  *****************************/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <string.h>
 #include "tfv2.h"
 
-PACKET* create_packet(FILE* fp, int seq_no, int length) {
+PACKET* create_packet(FILE* fp, int seq_no) {
     HEADER header = {
         seq_no,
-        length,
     };
 
-    PACKET pkt = {
-        header,
-    };
-
-    pkt.header.length = fread(pkt.data, 1, 10, fp); // read from file
-    pkt.header.checksum = calc_checksum(&pkt, pkt.header.length);
+    struct PACKET* pkt = malloc(sizeof(*pkt));
+    pkt->header = header;
+    
+    // read data from file
+    pkt->header.length = fread(pkt->data, 1, 10, fp);
+    // add checksum
+    pkt->header.checksum = calc_checksum(pkt, pkt->header.length);
 
     return pkt;
 }
 
 int main (int argc, char *argv[]) {
-    int sock, portNum, nBytes;
+    int sock;
     struct sockaddr_in serverAddr;
     socklen_t addr_size;
 
@@ -61,47 +63,30 @@ int main (int argc, char *argv[]) {
     }
 
     size_t read_bytes  = 10; // read bytes per 10 byte chunk
-	size_t total_bytes = 0; // total bytes read 
+	size_t file_bytes = 0; // total bytes read 
+    int seq_no = 0;
+
+    int nBytes;
+    PACKET* resp;
 
     // read file, create & send packets
     while (read_bytes) {
-        int state = 0;
-        int seq_no = 0;
-        int length;
-
         // create packet
-        pkt = create_packet(fp, seq_no, length);
+        PACKET* pkt = create_packet(fp, seq_no);
+        file_bytes += pkt->header.length;
 
-        total_bytes += pkt.header.length;
+        do {
+            // send data
+            sendto(sock, &pkt, sizeof(pkt), 0, (struct sockaddr*) &serverAddr, addr_size);
 
-        nBytes = strlen(buffer) + 1;
-        sendto(sock, buffer, nBytes, 0, (struct sockaddr*) &serverAddr, addr_size);
+            // wait for response
+            nBytes = recvfrom(sock, resp, sizeof(pkt), 0, NULL, NULL);
+        } while (resp->header.seq_ack != seq_no); // if ack incorrect, resend
 
+        // successful ack, state 0, ack = 0 or state 1, ack 1
 
-        // send packet seq = 0
-
-
-        // 0 state wait
-        // received packet w/ ack = 1, resend
-
-        // received packet w/ ack = 0
-
-        // 1 state
-        // send packet w/ seq = 1
-
-        // 1 state wait
-        // received packet w/ ack = 0, resend
-
-        // 0 state
-        // received packet w/ ack = 1
-        
-        // send
-        printf("Sending: %s", buffer);
-        sendto(sock, buffer, nBytes, 0, (struct sockaddr *)&serverAddr, addr_size);
-
-        // receive
-        nBytes = recvfrom(sock, buffer, 1024, 0, NULL, NULL);
-        printf("Received: %s\n", buffer);
+        // next state
+        seq_no = (seq_no + 1) % 2;
     }
 
     return 0;
