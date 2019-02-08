@@ -20,13 +20,18 @@ PACKET* create_packet(FILE* fp, int seq_no) {
         seq_no,
     };
 
-    struct PACKET* pkt = malloc(sizeof(*pkt));
+    PACKET* pkt = malloc(sizeof(pkt));
     pkt->header = header;
     
-    // read data from file
-    pkt->header.length = fread(pkt->data, 1, 10, fp);
-    // add checksum
-    pkt->header.checksum = calc_checksum(pkt, pkt->header.length);
+    if (fp) {
+        // read data from file
+        pkt->header.length = fread(pkt->data, 1, 10, fp);
+        // add checksum
+        pkt->header.checksum = calc_checksum(pkt, pkt->header.length);
+    } else {
+        // empty packet
+        pkt-> header.length = 0;
+    }
 
     return pkt;
 }
@@ -88,6 +93,22 @@ int main (int argc, char *argv[]) {
         // next state
         seq_no = (seq_no + 1) % 2;
     }
+
+    // send empty packet
+    PACKET* pkt = create_packet(NULL, seq_no);
+    int tries = 0;
+
+    while (tries < 3) {
+        sendto(sock, &pkt, sizeof(pkt), 0, (struct sockaddr*) &serverAddr, addr_size);
+        nBytes = recvfrom(sock, resp, sizeof(pkt), 0, NULL, NULL);
+        if (resp->header.seq_ack == seq_no) {
+            break;
+        }
+        tries += 1;
+    }
+
+    // clean up
+    fclose(fp);
 
     return 0;
 }

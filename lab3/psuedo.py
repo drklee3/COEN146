@@ -33,6 +33,8 @@ rdt_rcv(rcvpkt) &&
 ( corrupt(rcvpkt) ||
 isACK(rcvpkt,0) )
 
+### 
+
 connect()
 
 msg = createMessage()
