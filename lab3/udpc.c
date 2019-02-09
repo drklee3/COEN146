@@ -17,8 +17,9 @@ int main (int argc, char *argv[]) {
     struct sockaddr_in serverAddr;
     socklen_t addr_size;
 
-    if (argc != 5) {
-        printf("Usage: %s <port> <ip of server> <input> <output> \n", argv[0]);
+    if (argc < 5) {
+        // provide verify=1 option to randomly send 0 for checksum
+        printf("Usage: %s <port> <ip of server> <input> <output> [verify] \n", argv[0]);
         return 1;
     }
 
@@ -81,6 +82,15 @@ int main (int argc, char *argv[]) {
         }
 
         do {
+            // rand test 
+            if (argc == 6) {
+                // 20 % chance of sending a 0 checksum
+                if (rand_range(0, 100) < 5) {
+                    pkt->header.checksum = 0;
+                } else {
+                    pkt->header.checksum = calc_checksum(pkt, sizeof(HEADER) + pkt->header.length);
+                }
+            }
             // send data
             sendto(sock, pkt, sizeof(*pkt), 0, (struct sockaddr*) &serverAddr, addr_size);
 

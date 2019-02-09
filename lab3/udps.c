@@ -57,7 +57,7 @@ int main (int argc, char *argv[]) {
     FILE* fp;
 
     // send file content
-    while (req_data_length) {
+    while (1) {
         // receive  datagrams
         recvfrom(sock, req, sizeof(*req), 0, (struct sockaddr *)&serverStorage, &addr_size);
         req_sum = req->header.checksum;
@@ -75,17 +75,22 @@ int main (int argc, char *argv[]) {
         if (chksum != req_sum) {
             // use opposite seq #?
             ack->header.seq_ack = (req->header.seq_ack + 1) % 2;
-            printf("[WARN] Mismatched checksum %d vs %d (len %zd)\n",
+            printf("[WARN] Mismatched checksum %d\t vs\t %d\n",
                 chksum,
-                req->header.checksum,
-                sizeof(*req));
+                req->header.checksum);
+        
+        // receiving output file name
         } else if (is_receiving_filename && req_data_length > 0) {
             strcat(filename, req->data);
+        
+        // finished receiving file name
         } else if (is_receiving_filename && req_data_length == 0) {
             printf("Opening destination file: %s\n", filename);
             fp = fopen(filename, "wb");
             is_receiving_filename = 0; // finished receiving filename
             req_data_length = 10;      // reset data length to stay in loop
+        
+        // receiving file content
         } else if (req_data_length > 0) {
             // write to file if data sent
             data_bytes = fwrite(req->data, 1, req->header.length, fp);
@@ -95,10 +100,19 @@ int main (int argc, char *argv[]) {
 
         // send ack
         sendto(sock, ack, sizeof(ack), 0, (struct sockaddr *)&serverStorage, addr_size);
+
+        // finished receiving file content
+        if (chksum == req_sum 
+            && is_receiving_filename == 0
+            && req_data_length == 0) {
+            break;
+        }
     }
 
-    fclose(fp);
-    printf("Written %zd byte file to disk\n", written_bytes);
+    if (fp) {
+        fclose(fp);
+        printf("Written %zd byte file to disk\n", written_bytes);
+    }
 
     return 0;
 }

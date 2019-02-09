@@ -25,6 +25,14 @@ int calc_checksum(PACKET *pkt, int nBytes) {
     return (int) cs;
 }
 
+int rand_range(int low, int high) {
+    return rand() % (high + 1 - low) + low;
+}
+
+void substr(char* dest, char* str, int start, int len) {
+    strncpy(dest, &str[start], len);
+}
+
 PACKET* _create_packet(int seq_no) {
     HEADER header = {
         seq_no,
@@ -38,9 +46,6 @@ PACKET* _create_packet(int seq_no) {
     return pkt;
 }
 
-void substr(char* dest, char* str, int start, int len) {
-    strncpy(dest, &str[start], len);
-}
 
 PACKET* create_packet_str(char str[], int start, int len, int seq_no) {
     PACKET* pkt = _create_packet(seq_no);
