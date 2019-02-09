@@ -47,8 +47,7 @@ int main (int argc, char *argv[]) {
     int chksum, req_sum; // verified checksum
     int data_bytes;
     size_t written_bytes = 0;
-    int req_data_length = 10;
-    int state = 0;
+    int req_data_length  = 10;
 
     int is_receiving_filename = 1;
     char filename[100];
@@ -95,7 +94,6 @@ int main (int argc, char *argv[]) {
             // write to file if data sent
             data_bytes = fwrite(req->data, 1, req->header.length, fp);
             written_bytes += data_bytes;
-            state = (state + 1) % 2;
         }
 
         // send ack

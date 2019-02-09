@@ -108,7 +108,7 @@ int main (int argc, char *argv[]) {
                 tries += 1;
             }
         } while (resp->header.seq_ack != seq_no 
-            || (resp->header.seq_ack != seq_no 
+                || (resp->header.seq_ack != seq_no 
                 && pkt->header.length == 0
                 && tries < 3)); // if ack incorrect, resend
 
@@ -119,23 +119,6 @@ int main (int argc, char *argv[]) {
     }
 
     printf("Sent %zd byte file\n", file_bytes);
-
-    // send empty packet
-    /*
-    pkt = create_packet(NULL, seq_no);
-    int tries = 0;
-
-    while (tries < 3) {
-        sendto(sock, &pkt, sizeof(pkt), 0, (struct sockaddr*) &serverAddr, addr_size);
-        nBytes = recvfrom(sock, resp, sizeof(pkt), 0, NULL, NULL);
-        printf("Recieved %d bytes\n", nBytes);
-        if (resp->header.seq_ack == seq_no) {
-            break;
-        }
-        tries += 1;
-    }
-    */
-
 
     // clean up
     fclose(fp);
