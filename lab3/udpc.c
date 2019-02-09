@@ -49,24 +49,40 @@ int main (int argc, char *argv[]) {
     PACKET* pkt = malloc(sizeof(pkt)); // sending packet
     PACKET* resp = malloc(sizeof(resp)); // response packet
     int length = 10;
+    int tries  = 0; // attempts for empty packet 
 
-    int tries = 0; // attempts for empty packet 
+    int is_sending_filename = 1;
+
+    int outfile_start = 0;
 
     // read file, create & send packets
     while (length > 0) {
         // create packet
-        pkt = create_packet(fp, seq_no);
-        length = pkt->header.length;
-        file_bytes += length;
+
+        // filename
+        if (is_sending_filename) {
+            int len = strlen(argv[4]);
+            int diff = len - outfile_start;
+            int substr_len = diff < 10 ? diff : 10;
+
+            if (diff <= 0) {
+                // send empty packet
+                pkt = create_packet(NULL, seq_no);
+                is_sending_filename = 0;
+            } else {
+                pkt = create_packet_str(argv[4], outfile_start, substr_len, seq_no);
+            }
+
+            outfile_start += substr_len;
+        } else {
+            pkt = create_packet(fp, seq_no);
+            length = pkt->header.length;
+            file_bytes += length;
+        }
 
         do {
             // send data
             sendto(sock, pkt, sizeof(*pkt), 0, (struct sockaddr*) &serverAddr, addr_size);
-            printf("Sent %d bytes / %zd total, checksum: %d (len %zd)\n",
-                pkt->header.length,
-                file_bytes,
-                pkt->header.checksum,
-                sizeof(*pkt));
 
             // wait for response
             recvfrom(sock, resp, sizeof(*resp), 0, NULL, NULL);
@@ -77,10 +93,6 @@ int main (int argc, char *argv[]) {
                     resp->header.seq_ack,
                     seq_no);
             }
-            
-            printf("ACK: %d vs %d\n",
-                resp->header.seq_ack,
-                seq_no);
 
             if (pkt->header.length == 0) {
                 tries += 1;

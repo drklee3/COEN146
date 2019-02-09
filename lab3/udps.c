@@ -10,9 +10,6 @@
 #include <stdlib.h>
 #include "tfv2.h"
 
-/********************
- * main
- ********************/
 int main (int argc, char *argv[]) {
     int sock;
     struct sockaddr_in serverAddr;
@@ -43,66 +40,58 @@ int main (int argc, char *argv[]) {
         return 1;
     }
 
+    printf("Listening on 0.0.0.0:%s\n", argv[1]);
+
     PACKET* req = malloc(sizeof(req)); // request packet
     PACKET* ack;
-    int chksum; // verified checksum
+    int chksum, req_sum; // verified checksum
     int data_bytes;
     size_t written_bytes = 0;
     int req_data_length = 10;
     int state = 0;
 
-    FILE* fp = fopen("output", "wb");
+    int is_receiving_filename = 1;
+    char filename[100];
+    filename[0] = '\0';
 
+    FILE* fp;
+
+    // send file content
     while (req_data_length) {
         // receive  datagrams
         recvfrom(sock, req, sizeof(*req), 0, (struct sockaddr *)&serverStorage, &addr_size);
-
-        chksum = req->header.checksum;
-        req->header.checksum = 0;
-
-        printf("old %d, new %d\n",
-            calc_checksum(req, sizeof(PACKET)),
-            calc_checksum(req, sizeof(HEADER) + req->header.length)
-            );
-
+        req_sum = req->header.checksum;
+        
         // verify message
-        req->header.checksum = calc_checksum(req, sizeof(HEADER) + req->header.length);
-
-        printf("chksum %d, sizeof(*req) %zd\n",
-            chksum,
-            sizeof(PACKET));
+        req->header.checksum = 0;
+        chksum = calc_checksum(req, sizeof(HEADER) + req->header.length);
 
         // create packet
         ack = create_packet(NULL, req->header.seq_ack);
 
         req_data_length = req->header.length;
 
-        // printf("req header: seq_ack: %d, length: %d, checksum: %d\n",
-        //     req->header.seq_ack,
-        //     req->header.length,
-        //     req->header.checksum);
-
         // invalid checksum
-        if (chksum != req->header.checksum) {
+        if (chksum != req_sum) {
             // use opposite seq #?
             ack->header.seq_ack = (req->header.seq_ack + 1) % 2;
             printf("[WARN] Mismatched checksum %d vs %d (len %zd)\n",
                 chksum,
                 req->header.checksum,
                 sizeof(*req));
+        } else if (is_receiving_filename && req_data_length > 0) {
+            strcat(filename, req->data);
+        } else if (is_receiving_filename && req_data_length == 0) {
+            printf("Opening destination file: %s\n", filename);
+            fp = fopen(filename, "wb");
+            is_receiving_filename = 0; // finished receiving filename
+            req_data_length = 10;      // reset data length to stay in loop
         } else if (req_data_length > 0) {
             // write to file if data sent
-            data_bytes = fwrite(req->data, 10, 1, fp);
+            data_bytes = fwrite(req->data, 1, req->header.length, fp);
             written_bytes += data_bytes;
             state = (state + 1) % 2;
-            printf("    State updated %d\n", state);
         }
-
-        printf("REQ %d, ACK %d, REQSUM %d vs CHKSUM %d\n",
-            req->header.seq_ack,
-            ack->header.seq_ack,
-            req->header.checksum,
-            chksum);
 
         // send ack
         sendto(sock, ack, sizeof(ack), 0, (struct sockaddr *)&serverStorage, addr_size);
