@@ -1,11 +1,8 @@
 /**
  * Derrick Lee <dlee3@scu.edu>
  * 2.15F
+ * UDP client
  */
-
-/*****************************
- * COEN 146, UDP, client
- *****************************/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,27 +11,6 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include "tfv2.h"
-
-PACKET* create_packet(FILE* fp, int seq_no) {
-    HEADER header = {
-        seq_no,
-    };
-
-    PACKET* pkt = malloc(sizeof(pkt));
-    pkt->header = header;
-    
-    if (fp) {
-        // read data from file
-        pkt->header.length = fread(pkt->data, 1, 10, fp);
-        // add checksum
-        pkt->header.checksum = calc_checksum(pkt, pkt->header.length);
-    } else {
-        // empty packet
-        pkt-> header.length = 0;
-    }
-
-    return pkt;
-}
 
 int main (int argc, char *argv[]) {
     int sock;
@@ -67,26 +43,52 @@ int main (int argc, char *argv[]) {
         return 1;
     }
 
-    size_t read_bytes  = 10; // read bytes per 10 byte chunk
-	size_t file_bytes = 0; // total bytes read 
+	size_t file_bytes = 0;  // total bytes read 
     int seq_no = 0;
 
-    int nBytes;
-    PACKET* resp;
+    PACKET* pkt = malloc(sizeof(pkt)); // sending packet
+    PACKET* resp = malloc(sizeof(resp)); // response packet
+    int length = 10;
+
+    int tries = 0; // attempts for empty packet 
 
     // read file, create & send packets
-    while (read_bytes) {
+    while (length > 0) {
         // create packet
-        PACKET* pkt = create_packet(fp, seq_no);
-        file_bytes += pkt->header.length;
+        pkt = create_packet(fp, seq_no);
+        length = pkt->header.length;
+        file_bytes += length;
 
         do {
             // send data
-            sendto(sock, &pkt, sizeof(pkt), 0, (struct sockaddr*) &serverAddr, addr_size);
+            sendto(sock, pkt, sizeof(*pkt), 0, (struct sockaddr*) &serverAddr, addr_size);
+            printf("Sent %d bytes / %zd total, checksum: %d (len %zd)\n",
+                pkt->header.length,
+                file_bytes,
+                pkt->header.checksum,
+                sizeof(*pkt));
 
             // wait for response
-            nBytes = recvfrom(sock, resp, sizeof(pkt), 0, NULL, NULL);
-        } while (resp->header.seq_ack != seq_no); // if ack incorrect, resend
+            recvfrom(sock, resp, sizeof(*resp), 0, NULL, NULL);
+
+            // invalid ack
+            if (resp->header.seq_ack != seq_no) {
+                printf("[WARN] Mismatching seq/ack, %d vs %d\n",
+                    resp->header.seq_ack,
+                    seq_no);
+            }
+            
+            printf("ACK: %d vs %d\n",
+                resp->header.seq_ack,
+                seq_no);
+
+            if (pkt->header.length == 0) {
+                tries += 1;
+            }
+        } while (resp->header.seq_ack != seq_no 
+            || (resp->header.seq_ack != seq_no 
+                && pkt->header.length == 0
+                && tries < 3)); // if ack incorrect, resend
 
         // successful ack, state 0, ack = 0 or state 1, ack 1
 
@@ -94,18 +96,24 @@ int main (int argc, char *argv[]) {
         seq_no = (seq_no + 1) % 2;
     }
 
+    printf("Sent %zd byte file\n", file_bytes);
+
     // send empty packet
-    PACKET* pkt = create_packet(NULL, seq_no);
+    /*
+    pkt = create_packet(NULL, seq_no);
     int tries = 0;
 
     while (tries < 3) {
         sendto(sock, &pkt, sizeof(pkt), 0, (struct sockaddr*) &serverAddr, addr_size);
         nBytes = recvfrom(sock, resp, sizeof(pkt), 0, NULL, NULL);
+        printf("Recieved %d bytes\n", nBytes);
         if (resp->header.seq_ack == seq_no) {
             break;
         }
         tries += 1;
     }
+    */
+
 
     // clean up
     fclose(fp);
