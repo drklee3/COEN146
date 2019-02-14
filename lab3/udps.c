@@ -79,11 +79,9 @@ int main (int argc, char *argv[]) {
                 req->header.checksum);
         
         // receiving output file name
-        } else if (is_receiving_filename && req_data_length > 0) {
-            strcat(filename, req->data);
-        
-        // finished receiving file name
-        } else if (is_receiving_filename && req_data_length == 0) {
+        } else if (is_receiving_filename) {
+            strcpy(filename, req->data);
+            
             printf("Opening destination file: %s\n", filename);
             fp = fopen(filename, "wb");
             is_receiving_filename = 0; // finished receiving filename

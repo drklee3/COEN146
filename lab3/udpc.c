@@ -43,6 +43,11 @@ int main (int argc, char *argv[]) {
         printf("Failed to open input file\n");
         return 1;
     }
+    // make sure output file name <= 10 bytes
+    if (strlen(argv[4]) > 10) {
+        printf("Output filename length should be <= 10\n");
+        return 1;
+    }
 
 	size_t file_bytes = 0;  // total bytes read 
     int seq_no = 0;
@@ -54,27 +59,15 @@ int main (int argc, char *argv[]) {
 
     int is_sending_filename = 1;
 
-    int outfile_start = 0;
-
     // read file, create & send packets
     while (length > 0) {
         // create packet
 
         // filename
         if (is_sending_filename) {
-            int len = strlen(argv[4]);
-            int diff = len - outfile_start;
-            int substr_len = diff < 10 ? diff : 10;
+            pkt = create_packet_str(argv[4], strlen(argv[4]), seq_no);
+            is_sending_filename = 0;
 
-            if (diff <= 0) {
-                // send empty packet
-                pkt = create_packet(NULL, seq_no);
-                is_sending_filename = 0;
-            } else {
-                pkt = create_packet_str(argv[4], outfile_start, substr_len, seq_no);
-            }
-
-            outfile_start += substr_len;
         } else {
             pkt = create_packet(fp, seq_no);
             length = pkt->header.length;

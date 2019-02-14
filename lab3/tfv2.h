@@ -47,11 +47,11 @@ PACKET* _create_packet(int seq_no) {
 }
 
 
-PACKET* create_packet_str(char str[], int start, int len, int seq_no) {
+PACKET* create_packet_str(char str[], int len, int seq_no) {
     PACKET* pkt = _create_packet(seq_no);
 
     pkt->header.length = len;
-    strncpy(pkt->data, &str[start], len);
+    strncpy(pkt->data, str, len);
 
     pkt->header.checksum = calc_checksum(pkt, sizeof(HEADER) + pkt->header.length);
 
