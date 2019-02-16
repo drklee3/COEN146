@@ -50,8 +50,6 @@ int main (int argc, char *argv[]) {
     int req_data_length  = 10;
 
     int is_receiving_filename = 1;
-    char filename[100];
-    filename[0] = '\0';
 
     FILE* fp;
 
@@ -80,12 +78,13 @@ int main (int argc, char *argv[]) {
         
         // receiving output file name
         } else if (is_receiving_filename) {
-            strcpy(filename, req->data);
-            
-            printf("Opening destination file: %s\n", filename);
-            fp = fopen(filename, "wb");
+            printf("Opening destination file: %s\n", req->data);
+            fp = fopen(req->data, "wb");
+            if (!fp) {
+                printf("Failed to open destination file\n");
+                return 1;
+            }
             is_receiving_filename = 0; // finished receiving filename
-            req_data_length = 10;      // reset data length to stay in loop
         
         // receiving file content
         } else if (req_data_length > 0) {

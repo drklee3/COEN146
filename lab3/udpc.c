@@ -77,7 +77,7 @@ int main (int argc, char *argv[]) {
         do {
             // rand test 
             if (argc == 6) {
-                // 20 % chance of sending a 0 checksum
+                // 5 % chance of sending a 0 checksum
                 if (rand_range(0, 100) < 5) {
                     pkt->header.checksum = 0;
                 } else {
