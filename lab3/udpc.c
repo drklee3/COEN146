@@ -1,7 +1,7 @@
 /**
  * Derrick Lee <dlee3@scu.edu>
+ * File Transfer v3 Client
  * 2.15F
- * UDP client
  */
 
 #include <stdio.h>
@@ -97,13 +97,18 @@ int main (int argc, char *argv[]) {
                     seq_no);
             }
 
-            if (pkt->header.length == 0) {
+            if (resp->header.seq_ack != seq_no
+                && pkt->header.length == 0) {
                 tries += 1;
             }
-        } while (resp->header.seq_ack != seq_no 
-                || (resp->header.seq_ack != seq_no 
+
+            // only try resending null packets 3 times
+            if (resp->header.seq_ack != seq_no
                 && pkt->header.length == 0
-                && tries < 3)); // if ack incorrect, resend
+                && tries >= 3) {
+                break;
+            }
+        } while (resp->header.seq_ack != seq_no); // if ack incorrect, resend
 
         // successful ack, state 0, ack = 0 or state 1, ack 1
 
