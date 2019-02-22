@@ -119,6 +119,9 @@ int main (int argc, char *argv[]) {
                 continue;
             }
 
+            // reset retries count
+            retries = 0;
+
             // wait for response
             recvfrom(sock, resp, sizeof(*resp), 0, NULL, NULL);
 
