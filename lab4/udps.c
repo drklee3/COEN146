@@ -65,6 +65,11 @@ int main (int argc, char *argv[]) {
             }
         }
 
+        printf("recv chksum: %d\tseq: %d\tdata:%s\n", 
+            req->header.checksum,
+            req->header.seq_ack,
+            req->data);
+
         req_sum = req->header.checksum;
         
         // verify message
@@ -105,9 +110,9 @@ int main (int argc, char *argv[]) {
         sendto(sock, ack, sizeof(ack), 0, (struct sockaddr *)&serverStorage, addr_size);
 
         // finished receiving file content
-        if (chksum == req_sum 
-            && is_receiving_filename == 0
-            && req_data_length == 0) {
+        if (chksum == req_sum             // correct checksum
+            && is_receiving_filename == 0 // receiving content
+            && req_data_length == 0) {    // empty packet
             break;
         }
     }
