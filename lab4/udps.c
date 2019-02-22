@@ -44,7 +44,6 @@ int main (int argc, char *argv[]) {
     printf("Listening on 0.0.0.0:%s\n", argv[1]);
 
     PACKET* req = malloc(sizeof(req)); // request packet
-    PACKET* ack;
     int chksum, req_sum; // verified checksum
     int data_bytes;
     size_t written_bytes = 0;
@@ -76,15 +75,12 @@ int main (int argc, char *argv[]) {
         req->header.checksum = 0;
         chksum = calc_checksum(req, sizeof(HEADER) + req->header.length);
 
-        // create packet
-        ack = create_packet(NULL, req->header.seq_ack);
-
         req_data_length = req->header.length;
 
         // invalid checksum
         if (chksum != req_sum) {
             // use opposite seq #?
-            ack->header.seq_ack = (req->header.seq_ack + 1) % 2;
+            req->header.seq_ack = (req->header.seq_ack + 1) % 2;
             printf("[WARN] Mismatched checksum %d\t vs\t %d\n",
                 chksum,
                 req->header.checksum);
@@ -107,7 +103,7 @@ int main (int argc, char *argv[]) {
         }
 
         // send ack
-        sendto(sock, ack, sizeof(ack), 0, (struct sockaddr *)&serverStorage, addr_size);
+        sendto(sock, req, sizeof(req), 0, (struct sockaddr *)&serverStorage, addr_size);
 
         // finished receiving file content
         if (chksum == req_sum             // correct checksum
