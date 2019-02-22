@@ -63,8 +63,6 @@ int main (int argc, char *argv[]) {
 
     // timer values
     struct timeval tv;
-    tv.tv_sec = 1;
-    tv.tv_usec = 0;
 
     int time_resp;
     int retries = 0; // # of retries on no ack
@@ -100,6 +98,8 @@ int main (int argc, char *argv[]) {
 
             FD_ZERO(&readfds);
             FD_SET(sock, &readfds);
+            tv.tv_sec = 1;
+            tv.tv_usec = 0;
 
             // send data
             sendto(sock, pkt, sizeof(*pkt), 0, (struct sockaddr*) &serverAddr, addr_size);
@@ -113,7 +113,7 @@ int main (int argc, char *argv[]) {
                     return 1;
                 }
 
-                printf("Timed out, retrying...\n");
+                printf("Timed out, retrying... (try #%d)\n", retries + 1);
                 retries += 1;
 
                 continue;
