@@ -4,15 +4,19 @@ CFLAGS = -Wall -std=c99 -pthread -Wno-missing-braces
 
 default: main
 
-main: main.o costs.o receiver.o sender.o
-	$(CC) $(CFLAGS) -o main main.o costs.o receiver.o sender.o
+main: main.o costs.o receiver.o updater.o sender.o logger.o machine.o
+	$(CC) $(CFLAGS) -o main main.o costs.o receiver.o updater.o sender.o logger.o machine.o
 
-main.o: main.c receiver.h machine.h
+main.o: main.c receiver.h updater.h machine.h
 	$(CC) $(CFLAGS) -c main.c
 
-costs.o: costs.h
-receiver.o: receiver.h
+costs.o: costs.h logger.h
+logger.o: logger.h
+machine.o: machine.h
+receiver.o: receiver.h logger.h
 sender.o: sender.h
+updater.o: updater.h util.h logger.h
+util.o: util.h
 
 clean:
 	-rm -f *.o

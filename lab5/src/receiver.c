@@ -1,12 +1,24 @@
 #include <arpa/inet.h>
-#include <stdio.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
-#include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include "receiver.h"
+#include <string.h>
+#include <sys/socket.h>
+#include "logger.h"
 #include "machine.h"
+#include "receiver.h"
 
+/**
+ * @brief Receiver thread (Thread #1)
+ * 
+ * Repeats forever, receiving messages from
+ * other nodes and updates the neighbor cost
+ * table.  Updates cost in both directions,
+ * cost c from x to y and y to x.
+ * 
+ * @param _cfg   Configuration
+ * @return void*
+ */
 void* run_receiver(void* _cfg) {
     Config cfg = *(Config*) _cfg;
     int sock;
@@ -24,23 +36,28 @@ void* run_receiver(void* _cfg) {
 
     // create socket
     if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        printf("socket error\n");
+        log_error("socket error");
         return 0;
     }
 
     // bind
     if (bind(sock, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) != 0) {
-        printf("bind error\n");
+        log_error("bind error");
         return 0;
     }
 
-    printf("Listening on %s:%d\n", cfg.machine.ip, cfg.machine.port);
+    log_info("Machine %s listening on %s:%d",
+        cfg.machine.name, cfg.machine.ip, cfg.machine.port);
 
     char msg[10];
+
+    log_debug("%d", cfg.shutdown);
 
     // listener loop
     while (!cfg.shutdown) {
         // receieve messages
+        log_debug("Waiting for message");
+        
         recvfrom(sock, msg, sizeof(*msg), 0, (struct sockaddr *)&serverStorage, &addr_size);
 
         // update_costs(cost, x, y);
