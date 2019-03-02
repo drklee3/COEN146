@@ -29,6 +29,7 @@ int main(int argc, char *argv[]) {
         log_error("Invalid machine ID");
         return 1;
     }
+    log_info("current machine: %s", curr_machine->name);
 
     // create neighbor cost table
     log_debug("creating neighbor cost table");

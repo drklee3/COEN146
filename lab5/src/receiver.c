@@ -49,9 +49,8 @@ void* run_receiver(void* _cfg) {
     log_info("Machine %s listening on %s:%d",
         cfg.machine.name, cfg.machine.ip, cfg.machine.port);
 
+    // response message
     char msg[10];
-
-    log_debug("%d", cfg.shutdown);
 
     // listener loop
     while (!cfg.shutdown) {

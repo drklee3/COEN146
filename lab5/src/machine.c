@@ -13,9 +13,7 @@
  * @return Config* 
  */
 Config* create_config(Machine* machine) {
-    // tells other clients when to stop looping and return
     // malloc to allocate on heap
-
     Config* cfg = malloc(sizeof(Config));
 
     cfg->shutdown = malloc(sizeof(int));
@@ -29,6 +27,12 @@ Config* create_config(Machine* machine) {
     return cfg;
 }
 
+/**
+ * @brief Parses the machines file
+ * 
+ * @param fp        Pointer to machines file
+ * @return Machine* Array of machines
+ */
 Machine* parse_machines(FILE* fp) {
     if (!fp) {
         log_error("Failed to read machines file");
@@ -46,20 +50,37 @@ Machine* parse_machines(FILE* fp) {
     return machines;
 }
 
+/**
+ * @brief Prints all machine information
+ * 
+ * @param machines 
+ */
 void print_machines(Machine* machines) {
     for (int i = 0; i < 4; ++i) {
         printf("%s => %s:%d\n",
-            machines[i].name, machines[i].ip, machines[i].port);
+            machines[i].name,
+            machines[i].ip,
+            machines[i].port);
     }
 }
 
+/**
+ * @brief Gets machine with given name.
+ * Returns 0 if there is no machine with searched name.
+ * 
+ * @param machines   Array of machines (fixed size of 4)
+ * @param target     Name of machine to look for
+ * @return Machine* 
+ */
 Machine* get_machine(Machine* machines, char* target) {
     for (int i = 0; i < 4; ++i) {
-        if (strcmp(machines[i].name, target)) {
+        if (strcmp(machines[i].name, target) == 0) {
+            // matching name
             return &machines[i];
         }
     }
 
+    // could not find matching machine
     return 0;
 }
 
