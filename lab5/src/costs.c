@@ -99,7 +99,14 @@ void update_costs(CostTable* tbl, int* msg) {
     pthread_mutex_unlock(tbl->lock);
 }
 
-int get_min_dist(int* distances, int* visited) {
+/**
+ * @brief Gets the index of closet machine
+ * 
+ * @param distances 
+ * @param visited 
+ * @return int 
+ */
+int get_closest(int* distances, int* visited) {
     int min = INT_MAX;
     int min_index;
 
@@ -135,13 +142,14 @@ int* get_least_costs(CostTable* tbl, int start) {
     distances[start] = 0;
 
     for (int count = 0; count < 4; ++count) {
-        int min_index = get_min_dist(distances, visited);
+        int min_index = get_closest(distances, visited);
         visited[min_index] = 1;
 
         for (int j = 0; j < 4; ++j) {
-            if (!visited[j]
-                && table[min_index][j]
-                && distances[min_index] != INT_MAX
+            if (!visited[j]            // have not visited
+                && table[min_index][j] // is not zero
+                && distances[min_index] < 10000 // is a neighbor
+                // distance to closest + given node is closer than the given node
                 && distances[min_index] + table[min_index][j] < distances[j]) {
                     distances[j] = distances[min_index] + table[min_index][j];
             }

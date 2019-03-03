@@ -28,6 +28,9 @@ void* run_updater(void* _cfg) {
         int* costs = get_least_costs(cfg.costs, cfg.machine->id);
         printf("Least cost array: ");
         print_array(costs, 4);
+        // costs array will be redeclared/reallocated within get_least_costs
+        // so we want to free it to prevent memory leaks
+        free(costs);
     }
 
     return 0;
