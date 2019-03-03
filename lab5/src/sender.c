@@ -7,6 +7,11 @@
 #include "logger.h"
 #include "machine.h"
 
+/**
+ * @brief Reads new cost changes from stdin every 10 seconds
+ * 
+ * @param cfg Configuration
+ */
 void read_changes(Config* cfg) {
     // loop only 2 times?
     for (int i = 0; i < 2; ++i) {

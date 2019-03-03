@@ -1,6 +1,7 @@
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -13,6 +14,31 @@
 #define WHT   "\x1B[37m"
 #define RESET "\x1B[0m"
 
+#define DEBUG YEL "DEBUG" RESET
+#define ERROR RED "ERROR" RESET
+#define INFO  CYN "INFO"  RESET
+
+/**
+ * @brief Get the verbosity
+ * 
+ * @return int 0 for info, 1 debug, 
+ */
+int get_verbosity() {
+    const char* verbosity = getenv("LOG_LEVEL");
+
+    // default info logging
+    if (verbosity == NULL) {
+        return 0;
+    }
+    
+    if (strcmp(verbosity, "debug") == 0) {
+        return 1;
+    }
+
+    // fallback to info
+    return 0;
+}
+
 /**
  * @brief Logs messages based on given format
  * 
@@ -21,6 +47,13 @@
  * @param args    formatting arguments
  */
 void log_format(const char* tag, const char* message, va_list args) {
+    int verbosity = get_verbosity();
+
+    // skip if verbosity set to info and currently trying to log_debug
+    if (verbosity == 0 && strcmp(tag, DEBUG) == 0) {
+        return;
+    }
+
     // get current time
     char buff[16];
     time_t now = time(0);
@@ -30,7 +63,7 @@ void log_format(const char* tag, const char* message, va_list args) {
 
     // print to stderr if on error duh
     FILE* target = stdout;
-    if (strcmp(tag, "ERROR")) {
+    if (strcmp(tag, ERROR)) {
         target = stderr;
     }
     
@@ -50,7 +83,7 @@ void log_format(const char* tag, const char* message, va_list args) {
 void log_error(const char* message, ...) {
     va_list args;
     va_start(args, message);
-    log_format(RED "ERROR" RESET, message, args);
+    log_format(ERROR, message, args);
     va_end(args);
 }
 
@@ -63,7 +96,7 @@ void log_error(const char* message, ...) {
 void log_info(const char* message, ...) {
     va_list args;
     va_start(args, message);
-    log_format(CYN "INFO" RESET, message, args);
+    log_format(INFO, message, args);
     va_end(args);
 }
 
@@ -76,6 +109,6 @@ void log_info(const char* message, ...) {
 void log_debug(const char* message, ...) {
     va_list args;
     va_start(args, message);
-    log_format(YEL "DEBUG" RESET, message, args);
+    log_format(DEBUG, message, args);
     va_end(args);
 }

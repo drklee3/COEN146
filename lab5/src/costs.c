@@ -160,6 +160,12 @@ int* get_least_costs(CostTable* tbl, int start) {
     return distances;
 }
 
+/**
+ * @brief Prints an array
+ * 
+ * @param arr  Array to print
+ * @param size Size of array
+ */
 void print_array(int* arr, int size) {
     printf("[");
 
