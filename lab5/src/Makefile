@@ -12,9 +12,9 @@ main.o: main.c receiver.h updater.h machine.h
 
 costs.o: costs.h logger.h
 logger.o: logger.h
-machine.o: machine.h
-receiver.o: receiver.h logger.h
-sender.o: sender.h
+machine.o: machine.h costs.h
+receiver.o: receiver.h logger.h costs.h
+sender.o: sender.h machine.h logger.h
 updater.o: updater.h util.h logger.h
 util.o: util.h
 

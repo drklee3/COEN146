@@ -16,11 +16,11 @@ typedef struct {
     size_t**         table;
 } CostTable;
 
-// void update_least_costs();
 size_t** parse_costs(FILE* fp);
-
 CostTable* create_cost_table(FILE* fp, pthread_mutex_t* lock);
-
 void print_costs(CostTable* tbl);
+void update_costs(CostTable* tbl, int* msg);
+int* get_least_costs(CostTable* tbl, int start);
+void print_array(int* arr, int size);
 
 #endif

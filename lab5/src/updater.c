@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
+#include "costs.h"
 #include "logger.h"
 #include "machine.h"
 #include "util.h"
@@ -22,9 +23,11 @@ void* run_updater(void* _cfg) {
         log_info("Sleeping for %d seconds", sec);
         sleep(sec);
 
-        // run algorithm to update least costs
-
-        // output current least costs
+        log_debug("current cost table:");
+        print_costs(cfg.costs);
+        int* costs = get_least_costs(cfg.costs, cfg.machine->id);
+        printf("Least cost array: ");
+        print_array(costs, 4);
     }
 
     return 0;

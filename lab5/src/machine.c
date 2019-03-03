@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "costs.h"
 #include "logger.h"
 #include "machine.h"
 
@@ -12,17 +13,18 @@
  * @param port     Port of machine
  * @return Config* 
  */
-Config* create_config(Machine* machine) {
+Config* create_config(Machine* machines, Machine* machine, CostTable* costs_tbl) {
     // malloc to allocate on heap
     Config* cfg = malloc(sizeof(Config));
 
     cfg->shutdown = malloc(sizeof(int));
-    cfg->shutdown = 0;
+    cfg->shutdown = 0; // set to nonzero to exit loops in other threads
+    cfg->costs    = costs_tbl;
 
-    // copy input args to config
-    strncpy(cfg->machine.name, machine->name, sizeof(cfg->machine.name));
-    strncpy(cfg->machine.ip,   machine->ip,   sizeof(cfg->machine.ip));
-    cfg->machine.port = machine->port;
+    // current machine
+    cfg->machine = machine;
+
+    cfg->machines = machines;
 
     return cfg;
 }
@@ -42,6 +44,7 @@ Machine* parse_machines(FILE* fp) {
     Machine* machines = (Machine*) malloc(4 * sizeof(Machine));
 
     for (int i = 0; i < 4; ++i) {
+        machines[i].id = i;
         fscanf(fp, "%s", machines[i].name);
         fscanf(fp, "%s", machines[i].ip);
         fscanf(fp, "%d", &machines[i].port);
@@ -57,30 +60,10 @@ Machine* parse_machines(FILE* fp) {
  */
 void print_machines(Machine* machines) {
     for (int i = 0; i < 4; ++i) {
-        printf("%s => %s:%d\n",
+        printf("[%d] %s => %s:%d\n",
+            machines[i].id,
             machines[i].name,
             machines[i].ip,
             machines[i].port);
     }
 }
-
-/**
- * @brief Gets machine with given name.
- * Returns 0 if there is no machine with searched name.
- * 
- * @param machines   Array of machines (fixed size of 4)
- * @param target     Name of machine to look for
- * @return Machine* 
- */
-Machine* get_machine(Machine* machines, char* target) {
-    for (int i = 0; i < 4; ++i) {
-        if (strcmp(machines[i].name, target) == 0) {
-            // matching name
-            return &machines[i];
-        }
-    }
-
-    // could not find matching machine
-    return 0;
-}
-

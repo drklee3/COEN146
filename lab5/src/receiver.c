@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include "costs.h"
 #include "logger.h"
 #include "machine.h"
 #include "receiver.h"
@@ -28,8 +29,8 @@ void* run_receiver(void* _cfg) {
 
     // setup server
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port   = htons((short) cfg.machine.port);
-    inet_pton(AF_INET, cfg.machine.ip, &(serverAddr.sin_addr.s_addr));
+    serverAddr.sin_port   = htons((short) cfg.machine->port);
+    inet_pton(AF_INET, cfg.machine->ip, &(serverAddr.sin_addr.s_addr));
 
     memset((char *)serverAddr.sin_zero, '\0', sizeof(serverAddr.sin_zero));  
     addr_size = sizeof(serverStorage);
@@ -46,33 +47,26 @@ void* run_receiver(void* _cfg) {
         return 0;
     }
 
-    log_info("Machine %s listening on %s:%d",
-        cfg.machine.name, cfg.machine.ip, cfg.machine.port);
+    log_info("Machine [%d] %s listening on %s:%d",
+        cfg.machine->id, cfg.machine->name, cfg.machine->ip, cfg.machine->port);
 
-    // response message
-    char msg[10];
+    // response message [machine1, machine2, cost]
+    int msg[3];
 
     // listener loop
     while (!cfg.shutdown) {
         // receieve messages
         log_debug("Waiting for message");
         
-        recvfrom(sock, msg, sizeof(*msg), 0, (struct sockaddr *)&serverStorage, &addr_size);
+        recvfrom(sock, msg, sizeof(*msg), 0,
+            (struct sockaddr *)&serverStorage, &addr_size);
+        
+        log_debug("Received message: [%d %d %d]", msg[0], msg[1], msg[2]);
 
-        // update_costs(cost, x, y);
+        update_costs(cfg.costs, msg);
+        log_debug("updated cost table: ");
+        print_costs(cfg.costs);
     }
 
     return 0;
-}
-
-void parse_message() {
-
-}
-
-void update_costs(int cost, int x, int y) {
-    // lock table
-
-    // update costs
-
-    // unlock table
 }

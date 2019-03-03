@@ -1,25 +1,10 @@
+#include <limits.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "costs.h"
 #include "logger.h"
-
-/*
-char* split(char* in_str, char* delimeters) {
-    char splitted[10];
-
-    // split by lines
-    char* token = strtok(str, delimeters);
-    while (token != NULL) {
-        // append to array
-        *(splitted + 1) = token;
-        token = strtok(NULL, delimeters);
-    }
-
-    return splitted;
-}
-*/
 
 /**
  * @brief Creates a cost table object
@@ -95,15 +80,88 @@ void print_costs(CostTable* tbl) {
     pthread_mutex_unlock(tbl->lock); 
 }
 
-/*
-int* create_cost_table(char* table_str) {
-    char lines[10] = split(table_str, "\n\r");
+/**
+ * @brief Updates the cost table with a new cost in both directions
+ * 
+ * @param tbl CostTable
+ * @param msg Message from another node as [machine1, machine2, cost]
+ */
+void update_costs(CostTable* tbl, int* msg) {
+    int x    = msg[0];
+    int y    = msg[1];
+    int cost = msg[2];
 
-    for (int i = 0; i < sizeof(array); ++i) {
-        char* line = lines[i];
-        split(line)
+    pthread_mutex_lock(tbl->lock);
+
+    tbl->table[x][y] = cost;
+    tbl->table[y][x] = cost;
+    
+    pthread_mutex_unlock(tbl->lock);
+}
+
+int get_min_dist(int* distances, int* visited) {
+    int min = INT_MAX;
+    int min_index;
+
+    for (int i = 0; i < 4; ++i) {
+        if (visited[i] == 0 && distances[i] <= min) {
+            min = distances[i];
+            min_index = i;
+        }
     }
 
-    int table[size];
+    return min_index;
 }
-*/
+
+/**
+ * @brief Gets the least cost array
+ * obtained with the link state algorithm using dijkstra's algorithm
+ * 
+ * @param tbl 
+ * @param start 
+ */
+int* get_least_costs(CostTable* tbl, int start) {
+    pthread_mutex_lock(tbl->lock);
+    size_t** table = tbl->table;
+
+    int* distances = (int*) malloc(4 * sizeof(int));
+    // initialize to max int
+    for (int i = 0; i < 4; ++i) {
+        distances[i] = INT_MAX;
+    }
+
+    int visited[4] = {0};
+
+    distances[start] = 0;
+
+    for (int count = 0; count < 4; ++count) {
+        int min_index = get_min_dist(distances, visited);
+        visited[min_index] = 1;
+
+        for (int j = 0; j < 4; ++j) {
+            if (!visited[j]
+                && table[min_index][j]
+                && distances[min_index] != INT_MAX
+                && distances[min_index] + table[min_index][j] < distances[j]) {
+                    distances[j] = distances[min_index] + table[min_index][j];
+            }
+        }
+    }
+    pthread_mutex_unlock(tbl->lock);
+
+    return distances;
+}
+
+void print_array(int* arr, int size) {
+    printf("[");
+
+    for (int i = 0; i < size; ++i) {
+        // last element
+        if (i == size - 1) {
+            printf("%d]\n", arr[i]);
+            continue;
+        }
+
+        printf("%d ", arr[i]);
+    }
+}

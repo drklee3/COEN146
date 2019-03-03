@@ -7,6 +7,7 @@
 #include "logger.h"
 #include "machine.h"
 #include "receiver.h"
+#include "sender.h"
 #include "updater.h"
 
 int main(int argc, char *argv[]) {
@@ -19,17 +20,26 @@ int main(int argc, char *argv[]) {
     log_debug("fetching machines");
     FILE* machines_fp = fopen(argv[4], "r");
     Machine* machines = parse_machines(machines_fp);
+
+    // check if machine parsing errored
     if  (!machines) {
         return 1;
     }
 
     print_machines(machines);
-    Machine* curr_machine = get_machine(machines, argv[1]);
-    if (!curr_machine) {
-        log_error("Invalid machine ID");
+
+    // get current machine
+    char* endptr; // used to check if strtol failed
+    int machine_id = strtol(argv[1], &endptr, 10);
+    if (machine_id > 3 || endptr <= argv[1]) {
+        log_error("Invalid machine ID, must be between 0 and 3 inclusive");
         return 1;
     }
-    log_info("current machine: %s", curr_machine->name);
+
+    Machine* curr_machine = &machines[machine_id];
+    log_info("current machine: %d => %s [%s:%d]",
+        curr_machine->id, curr_machine->name,
+        curr_machine->ip, curr_machine->port);
 
     // create neighbor cost table
     log_debug("creating neighbor cost table");
@@ -46,7 +56,7 @@ int main(int argc, char *argv[]) {
 
     // create config
     log_debug("creating config");    
-    Config* cfg = create_config(curr_machine);
+    Config* cfg = create_config(machines, curr_machine, cost_table);
 
     // reference to thread
     pthread_t thread_receiver;
@@ -64,13 +74,18 @@ int main(int argc, char *argv[]) {
         log_error("Error creating thread");
         return 1;
     }
+
+    read_changes(cfg);
     
+    // join other threads
     if (pthread_join(thread_receiver, NULL)) {
         log_error("Failed to join receiver thread");
+        return 1;
     }
 
     if (pthread_join(thread_updater, NULL)) {
         log_error("Failed to join updater thread");
+        return 1;
     }
 
     return 0;
