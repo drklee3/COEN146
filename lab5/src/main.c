@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
     }
 
     Machine* curr_machine = &machines[machine_id];
-    log_info("current machine: %d => %s [%s:%d]",
+    log_debug("current machine: %d => %s [%s:%d]",
         curr_machine->id, curr_machine->name,
         curr_machine->ip, curr_machine->port);
 
