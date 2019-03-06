@@ -62,22 +62,47 @@ size_t** parse_costs(FILE* fp) {
 }
 
 /**
+ * @brief Locks the table and returns inner cost table
+ * 
+ * This is used to avoid using the inner CostTable->table data structure
+ * directly, and only using the returned table pointer from this function which
+ * reduces the risk of accidentally using the inner table datastructure without
+ * locking it first
+ * 
+ * @param tbl       CostTable
+ * @return size_t** inner table structure
+ */
+size_t** lock_table(CostTable* tbl) {
+    pthread_mutex_lock(tbl->lock);
+    return tbl->table;
+}
+
+/**
+ * @brief Unlocks the table
+ * 
+ * @param tbl Cost table
+ */
+void unlock_table(CostTable* tbl) {
+    pthread_mutex_unlock(tbl->lock);
+}
+
+/**
  * @brief Prints current neighbor costs
  * 
  * @param tbl CostTable
  */
 void print_costs(CostTable* tbl) {
-    pthread_mutex_lock(tbl->lock);
+    size_t** table = lock_table(tbl);
 
     // loop inside a lock
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) {
-            printf("%zd\t", tbl->table[i][j]);
+            printf("%zd\t", table[i][j]);
         }
         printf("\n");
     }
 
-    pthread_mutex_unlock(tbl->lock); 
+    unlock_table(tbl);
 }
 
 /**
@@ -91,12 +116,12 @@ void update_costs(CostTable* tbl, int* msg) {
     int y    = msg[1];
     int cost = msg[2];
 
-    pthread_mutex_lock(tbl->lock);
+    size_t** table = lock_table(tbl);
 
-    tbl->table[x][y] = cost;
-    tbl->table[y][x] = cost;
+    table[x][y] = cost;
+    table[y][x] = cost;
     
-    pthread_mutex_unlock(tbl->lock);
+    unlock_table(tbl);
 }
 
 /**
@@ -128,8 +153,7 @@ int get_closest(int* distances, int* visited) {
  * @param start 
  */
 int* get_least_costs(CostTable* tbl, int start) {
-    pthread_mutex_lock(tbl->lock);
-    size_t** table = tbl->table;
+    size_t** table = lock_table(tbl);
 
     int* distances = (int*) malloc(4 * sizeof(int));
     // initialize to max int
@@ -155,7 +179,7 @@ int* get_least_costs(CostTable* tbl, int start) {
             }
         }
     }
-    pthread_mutex_unlock(tbl->lock);
+    unlock_table(tbl);
 
     return distances;
 }

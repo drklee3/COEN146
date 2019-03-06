@@ -5,6 +5,7 @@
 #include <string.h>
 #include <time.h>
 
+// colour codes
 #define RED   "\x1B[31m"
 #define GRN   "\x1B[32m"
 #define YEL   "\x1B[33m"
@@ -14,12 +15,13 @@
 #define WHT   "\x1B[37m"
 #define RESET "\x1B[0m"
 
+// coloured tags
 #define DEBUG YEL "DEBUG" RESET
 #define ERROR RED "ERROR" RESET
 #define INFO  CYN "INFO"  RESET
 
 /**
- * @brief Get the verbosity
+ * @brief Get the verbosity from LOG_LEVEL environment variable
  * 
  * @return int 0 for info, 1 debug, 
  */
