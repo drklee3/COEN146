@@ -46,10 +46,12 @@ size_t** parse_costs(FILE* fp) {
     // stack as to allow for use after exiting function scope
     size_t** costs_table = (size_t**) malloc(4 * sizeof(size_t*));
 
+    // allocate inner arrays
     for (int i = 0; i < 4; ++i) {
         costs_table[i] = (size_t*) malloc(4 * sizeof(size_t));
     }
 
+    // read file
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) {
             fscanf(fp, "%zd", &costs_table[i][j]);
@@ -94,7 +96,7 @@ void unlock_table(CostTable* tbl) {
 void print_costs(CostTable* tbl) {
     size_t** table = lock_table(tbl);
 
-    // loop inside a lock
+    // print loop inside lock
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) {
             printf("%zd\t", table[i][j]);
@@ -112,6 +114,7 @@ void print_costs(CostTable* tbl) {
  * @param msg Message from another node as [machine1, machine2, cost]
  */
 void update_costs(CostTable* tbl, int* msg) {
+    // reassign to variables to make more clear
     int x    = msg[0];
     int y    = msg[1];
     int cost = msg[2];
@@ -155,17 +158,20 @@ int get_closest(int* distances, int* visited) {
 int* get_least_costs(CostTable* tbl, int start) {
     size_t** table = lock_table(tbl);
 
+    // malloc since we need to use this after return
     int* distances = (int*) malloc(4 * sizeof(int));
     // initialize to max int
     for (int i = 0; i < 4; ++i) {
         distances[i] = INT_MAX;
     }
 
+    // initialize to 0
     int visited[4] = {0};
 
+    // start node always distance of 0 to itself
     distances[start] = 0;
 
-    for (int count = 0; count < 4; ++count) {
+    for (int i = 0; i < 4; ++i) {
         int min_index = get_closest(distances, visited);
         visited[min_index] = 1;
 
@@ -194,12 +200,12 @@ void print_array(int* arr, int size) {
     printf("[");
 
     for (int i = 0; i < size; ++i) {
-        // last element
+        // last element with closing bracket
         if (i == size - 1) {
             printf("%d]\n", arr[i]);
             continue;
         }
 
-        printf("%d ", arr[i]);
+        printf("%d, ", arr[i]);
     }
 }
