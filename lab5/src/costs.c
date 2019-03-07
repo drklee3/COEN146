@@ -69,7 +69,8 @@ size_t** parse_costs(FILE* fp) {
  * This is used to avoid using the inner CostTable->table data structure
  * directly, and only using the returned table pointer from this function which
  * reduces the risk of accidentally using the inner table datastructure without
- * locking it first
+ * locking it first.  Only need to remember to call unlock_table(tbl) when
+ * finished with the lock.
  * 
  * @param tbl       CostTable
  * @return size_t** inner table structure
