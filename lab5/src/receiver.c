@@ -58,7 +58,7 @@ void* run_receiver(void* _cfg) {
         // receieve messages
         log_debug("Waiting for message");
         
-        recvfrom(sock, msg, sizeof(*msg), 0,
+        recvfrom(sock, msg, sizeof(msg), 0,
             (struct sockaddr *)&serverStorage, &addr_size);
         
         log_debug("Received message: [%d %d %d]", msg[0], msg[1], msg[2]);
