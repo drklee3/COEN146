@@ -24,7 +24,7 @@ void read_changes(Config* cfg) {
 
         scanf("%d %d", &target, &new_cost);
 
-        if (target > 3 && target < 0) {
+        if (target > 3 || target < 0) {
             log_error("invalid machine id");
             continue;
         }
